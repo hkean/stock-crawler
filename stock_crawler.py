@@ -2,8 +2,6 @@ import requests
 from bs4 import BeautifulSoup
 import csv
 from datetime import datetime
-import schedule
-import time
 import pytz
 
 # List of stock URLs
@@ -49,15 +47,6 @@ def crawl_prices():
     write_to_csv(results)
     print("Finished writing to CSV.\n")
 
-# Schedule every Friday at 3PM GMT+8
-def start_scheduler():
-    gmt8 = pytz.timezone('Asia/Kuala_Lumpur')
-    schedule.every().friday.at("15:00").do(crawl_prices)
-
-    print("Scheduler started. Waiting for Friday 3PM GMT+8...\n")
-    while True:
-        schedule.run_pending()
-        time.sleep(60)
-
+# No scheduler needed — we call the function directly
 if __name__ == "__main__":
-    start_scheduler()
+    crawl_prices()
