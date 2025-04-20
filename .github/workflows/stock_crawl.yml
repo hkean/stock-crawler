@@ -24,6 +24,10 @@ jobs:
       - name: Install dependencies
         run: pip install -r requirements.txt
 
+      - name: Install Playwright dependencies
+        run: |
+          playwright install
+
       - name: Run crawler
         run: python stock_crawler.py
 
