@@ -30,6 +30,6 @@ jobs:
       run: |
         git config --global user.name "github-actions"
         git config --global user.email "github-actions@github.com"
-        git add stock_prices.csv
+        git add data/stock_prices.csv
         git commit -m "Update stock prices on $(date +'%Y-%m-%d')" || echo "No changes to commit"
         git push https://x-access-token:${{ secrets.GH_TOKEN }}@github.com/${{ github.repository }}.git
