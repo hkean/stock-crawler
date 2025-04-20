@@ -3,6 +3,7 @@ from bs4 import BeautifulSoup
 import csv
 from datetime import datetime
 import pytz
+import os
 
 # List of stock URLs
 STOCK_URLS = {
@@ -30,7 +31,8 @@ def get_price(url):
 
 # Write to CSV
 def write_to_csv(data):
-    with open("stock_prices.csv", "a", newline="") as csvfile:
+    os.makedirs("data", exist_ok=True)  # ✅ create 'data' folder if missing
+    with open("data/stock_prices.csv", "a", newline="") as csvfile:
         writer = csv.writer(csvfile)
         for symbol, price in data.items():
             writer.writerow([datetime.now().strftime("%Y-%m-%d %H:%M:%S"), symbol, price])
