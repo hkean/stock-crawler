@@ -4,6 +4,7 @@ import csv
 from datetime import datetime
 import pytz
 import os
+from playwright.sync_api import sync_playwright
 
 # List of stock URLs
 STOCK_URLS = {
@@ -17,17 +18,15 @@ STOCK_URLS = {
 }
 
 # Extract price from TradingView
-def get_price(url):
-    headers = {
-        "User-Agent": "Mozilla/5.0"
-    }
-    try:
-        response = requests.get(url, headers=headers)
-        soup = BeautifulSoup(response.text, "html.parser")
-        price_element = soup.find("div", class_="tv-symbol-price-quote__value")
-        return price_element.text.strip() if price_element else "N/A"
-    except Exception as e:
-        return f"Error: {e}"
+def get_price_with_playwright(url):
+    with sync_playwright() as p:
+        browser = p.chromium.launch(headless=True)
+        page = browser.new_page()
+        page.goto(url, timeout=60000)
+        page.wait_for_selector("div.tv-symbol-price-quote__value", timeout=10000)
+        price = page.query_selector("div.tv-symbol-price-quote__value").inner_text()
+        browser.close()
+        return price
 
 # Write to CSV
 def write_to_csv(data):
@@ -43,7 +42,7 @@ def crawl_prices():
     results = {}
     for symbol, url in STOCK_URLS.items():
         print(f"Fetching price for {symbol}...")
-        price = get_price(url)
+        price = get_price_with_playwright(url)
         results[symbol] = price
         print(f"{symbol}: {price}")
     write_to_csv(results)
