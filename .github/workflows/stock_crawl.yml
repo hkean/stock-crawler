@@ -1,0 +1,33 @@
+name: Weekly Stock Price Crawler
+
+on:
+  schedule:
+    - cron: '0 7 * * 5'  # Every Friday at 3PM GMT+8 (which is 7AM UTC)
+  workflow_dispatch:      # Optional: allows manual trigger
+
+jobs:
+  run-crawler:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.11'
+
+    - name: Install dependencies
+      run: |
+        pip install requests beautifulsoup4 pytz
+
+    - name: Run script
+      run: |
+        python stock_crawler.py
+
+    - name: Upload CSV result
+      uses: actions/upload-artifact@v4
+      with:
+        name: stock_prices
+        path: stock_prices.csv
