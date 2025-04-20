@@ -2,34 +2,12 @@ name: Weekly Stock Price Crawler
 
 on:
   schedule:
-    - cron: '0 7 * * 5'  # Every Friday at 3PM GMT+8
+    - cron: '0 7 * * 5'  # Every Friday 3PM GMT+8
   workflow_dispatch:
 
+permissions:
+  contents: write  # ✅ allow commit and push to repo
+
 jobs:
-  run-crawler:
+  crawl:
     runs-on: ubuntu-latest
-
-    steps:
-    - name: Checkout repo
-      uses: actions/checkout@v3
-
-    - name: Set up Python
-      uses: actions/setup-python@v5
-      with:
-        python-version: '3.11'
-
-    - name: Install dependencies
-      run: |
-        pip install requests beautifulsoup4 pytz schedule
-
-    - name: Run crawler
-      run: |
-        python stock_crawler.py
-
-    - name: Commit CSV to repo
-      run: |
-        git config --global user.name "github-actions"
-        git config --global user.email "github-actions@github.com"
-        git add data/stock_prices.csv
-        git commit -m "Update stock prices on $(date +'%Y-%m-%d')" || echo "No changes to commit"
-        git push https://x-access-token:${{ secrets.GH_TOKEN }}@github.com/${{ github.repository }}.git
