@@ -28,7 +28,7 @@ jobs:
 
     - name: Commit and push CSV file
       env:
-        GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}  # <-- create this secret with a Personal Access Token
+        GITHUB_TOKEN: ${{ secrets.GH_PAT }}  # <-- create this secret with a Personal Access Token
       run: |
         git config --global user.name "github-actions[bot]"
         git config --global user.email "github-actions[bot]@users.noreply.github.com"
