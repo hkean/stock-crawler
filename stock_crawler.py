@@ -19,14 +19,21 @@ STOCK_URLS = {
 
 # Extract price from TradingView
 def get_price_with_playwright(url):
+    from playwright.sync_api import sync_playwright
+
     with sync_playwright() as p:
         browser = p.chromium.launch(headless=True)
         page = browser.new_page()
         page.goto(url, timeout=60000)
+        
+        print("Loaded:", url)
+        print(page.content())  # 👈 add this line to dump HTML
+
         page.wait_for_selector("div.tv-symbol-price-quote__value", timeout=10000)
         price = page.query_selector("div.tv-symbol-price-quote__value").inner_text()
         browser.close()
         return price
+
 
 # Write to CSV
 def write_to_csv(data):
