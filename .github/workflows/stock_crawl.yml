@@ -28,7 +28,7 @@ jobs:
 
     - name: Commit and push CSV file
       env:
-        GITHUB_TOKEN: ${{ secrets.GH_PAT }}  # <-- create this secret with a Personal Access Token
+        GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}  # <-- create this secret with a Personal Access Token
       run: |
         git config --global user.name "github-actions[bot]"
         git config --global user.email "github-actions[bot]@users.noreply.github.com"
@@ -39,5 +39,5 @@ jobs:
           echo "No changes to commit."
         else
           git commit -m "Update stock prices on $(date +'%Y-%m-%d %H:%M:%S')"
-          git push https://x-access-token:${GH_TOKEN}@github.com/${{ github.repository }}.git HEAD:${{ github.ref }}
+          git push https://x-access-token:${GITHUB_TOKEN}@github.com/${{ github.repository }}.git HEAD:${{ github.ref }}
         fi
