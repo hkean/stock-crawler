@@ -39,5 +39,6 @@ jobs:
           echo "No changes to commit."
         else
           git commit -m "Update stock prices on $(date +'%Y-%m-%d %H:%M:%S')"
-          git push https://x-access-token:${GITHUB_TOKEN}@github.com/${{ github.repository }}.git HEAD:${{ github.ref }}
+          git push --force "https://x-access-token:${GITHUB_TOKEN}@github.com/${{ github.repository }}.git" HEAD:${{ github.ref }}
+
         fi
