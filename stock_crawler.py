@@ -4,7 +4,7 @@ import csv
 from datetime import datetime
 import pytz
 import os
-from playwright.sync_api import sync_playwright
+# from playwright.sync_api import sync_playwright
 
 # List of stock URLs
 STOCK_URLS = {
@@ -18,25 +18,46 @@ STOCK_URLS = {
 }
 
 # Extract price from TradingView
-def get_price_with_playwright(url):
-    from playwright.sync_api import sync_playwright
+from playwright.sync_api import sync_playwright, TimeoutError as PlaywrightTimeoutError
 
+def get_price_with_playwright(url: str) -> str:
     with sync_playwright() as p:
         browser = p.chromium.launch(headless=True)
         page = browser.new_page()
-        page.goto(url, timeout=60000)
 
-        page.screenshot(path="amway.png", full_page=True)
-        print("Screenshot taken.")
+        print(f"Fetching price for {url}...")
 
-        html = page.content()
-        print(html[:1000])  # only show first 1000 chars
+        try:
+            # Go to the page and wait for network activity to settle
+            page.goto(url, wait_until="networkidle")
 
-        page.wait_for_selector("div.tv-symbol-price-quote__value", timeout=30000)  # 30 seconds
-        price = page.query_selector("div.tv-symbol-price-quote__value").inner_text()
+            # Wait for the price element to appear
+            page.wait_for_selector("div.tv-symbol-price-quote__value", timeout=30000)
 
-        browser.close()
-        return price
+            # Extract price
+            price = page.query_selector("div.tv-symbol-price-quote__value").inner_text()
+
+            print(f"Price fetched: {price}")
+            return price
+
+        except PlaywrightTimeoutError:
+            print("❌ TimeoutError: Selector 'div.tv-symbol-price-quote__value' not found within 30 seconds.")
+            
+            # Save a full page screenshot
+            screenshot_path = "error.png"
+            page.screenshot(path=screenshot_path, full_page=True)
+            print(f"📸 Screenshot saved to: {screenshot_path}")
+            
+            # Save the HTML content for offline inspection
+            html_dump = page.content()
+            with open("error_page_dump.html", "w", encoding="utf-8") as f:
+                f.write(html_dump)
+            print("📝 HTML content dumped to 'error_page_dump.html'.")
+
+            raise  # Re-raise for CI to catch as failure
+
+        finally:
+            browser.close()
 
 
 # Write to CSV
