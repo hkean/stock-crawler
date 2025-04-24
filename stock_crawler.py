@@ -17,30 +17,14 @@ stock_symbols = {
 # Output CSV file
 output_file = "stock_prices.csv"
 
-#def fetch_price_yfinance(symbol: str) -> float:
-#    ticker = yf.Ticker(symbol)
-#    data = ticker.history(period="1d", interval="1m")
-#    if not data.empty:
-#        latest_price = data['Close'].iloc[-1]
-#        return round(latest_price, 2)
-#    else:
-#        raise ValueError(f"No data returned for symbol: {symbol}")
-
-def get_price_yfinance(symbol):
-    try:
-        stock = yf.Ticker(symbol)
-        info = stock.info
-        price = info.get("regularMarketPrice") or info.get("currentPrice")
-
-        if not price:
-            # fallback to historical data
-            hist = stock.history(period="1d")
-            price = hist["Close"].iloc[-1] if not hist.empty else None
-
-        return price if price else "NA"
-    except Exception as e:
-        print(f"⚠️ Error fetching {symbol}: {e}")
-        return "NA"
+def fetch_price_yfinance(symbol: str) -> float:
+    ticker = yf.Ticker(symbol)
+    data = ticker.history(period="1d", interval="1m")
+    if not data.empty:
+        latest_price = data['Close'].iloc[-1]
+        return round(latest_price, 2)
+    else:
+        raise ValueError(f"No data returned for symbol: {symbol}")
 
 def write_to_csv(timestamp: str, prices: dict):
     file_exists = False
