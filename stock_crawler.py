@@ -25,12 +25,19 @@ def get_price_with_playwright(url):
         browser = p.chromium.launch(headless=True)
         page = browser.new_page()
         page.goto(url, timeout=60000)
-        
-        print("Loaded:", url)
-        print(page.content())  # 👈 add this line to dump HTML
 
-        page.wait_for_selector("div.tv-symbol-price-quote__value", timeout=10000)
+        page.screenshot(path="amway.png", full_page=True)
+        print("Screenshot taken.")
+
+        html = page.content()
+        print(html[:1000])  # only show first 1000 chars
+
+        page.wait_for_selector("div.tv-symbol-price-quote__value", timeout=30000)  # 30 seconds
         price = page.query_selector("div.tv-symbol-price-quote__value").inner_text()
+
+        frame = page.frame(name="tradingview-widget")  # Name may vary!
+        price_element = frame.query_selector("div.tv-symbol-price-quote__value")
+
         browser.close()
         return price
 
