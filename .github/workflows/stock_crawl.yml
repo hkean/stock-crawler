@@ -1,31 +1,43 @@
-name: Crawl Stock Prices
+name: Weekly Stock Price Crawler
 
 on:
   schedule:
-    - cron: '0 7 * * 5' # Every Friday at 3 PM GMT+8 (which is 7 AM UTC)
-  workflow_dispatch: # Optional: allows manual run
+    - cron: '0 7 * * 5'  # Every Friday at 3PM GMT+8 (7AM UTC)
+  workflow_dispatch:
 
 jobs:
-  run-crawler:
+  crawl:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout repo
-        uses: actions/checkout@v4
+    - name: Checkout repository
+      uses: actions/checkout@v4
+      with:
+        persist-credentials: false  # disable default GITHUB_TOKEN to use PAT below
 
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.11'
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.11'
 
-      - name: Install dependencies
-        run: pip install yfinance pandas
+    - name: Install dependencies
+      run: pip install -r requirements.txt
 
-      - name: Run stock crawler
-        run: python stock_crawler.py
+    - name: Run crawler
+      run: python stock_crawler.py
 
-      - name: Upload output CSV as artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: stock-prices
-          path: stock_prices.csv
+    - name: Commit and push CSV file
+      env:
+        GITHUB_TOKEN: ${{ secrets.GH_PAT }}  # <-- create this secret with a Personal Access Token
+      run: |
+        git config --global user.name "github-actions[bot]"
+        git config --global user.email "github-actions[bot]@users.noreply.github.com"
+        git add stock_prices.csv
+
+        # Only commit if there are changes
+        if git diff --cached --quiet; then
+          echo "No changes to commit."
+        else
+          git commit -m "Update stock prices on $(date +'%Y-%m-%d %H:%M:%S')"
+          git push https://x-access-token:${GITHUB_TOKEN}@github.com/${{ github.repository }}.git HEAD:${{ github.ref }}
+        fi
