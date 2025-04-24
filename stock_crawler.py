@@ -35,9 +35,6 @@ def get_price_with_playwright(url):
         page.wait_for_selector("div.tv-symbol-price-quote__value", timeout=30000)  # 30 seconds
         price = page.query_selector("div.tv-symbol-price-quote__value").inner_text()
 
-        frame = page.frame(name="tradingview-widget")  # Name may vary!
-        price_element = frame.query_selector("div.tv-symbol-price-quote__value")
-
         browser.close()
         return price
 
