@@ -1,85 +1,60 @@
-import requests
-from bs4 import BeautifulSoup
+import yfinance as yf
 import csv
 from datetime import datetime
-import pytz
-import os
-# from playwright.sync_api import sync_playwright
 
-# List of stock URLs
-STOCK_URLS = {
-    "AMWAY": "https://www.tradingview.com/symbols/MYX-AMWAY/",
-    "APOLLO": "https://www.tradingview.com/symbols/MYX-APOLLO/",
-    "MAYBANK": "https://www.tradingview.com/symbols/MYX-MAYBANK/",
-    "PANAMY": "https://www.tradingview.com/symbols/MYX-PANAMY/",
-    "PCHEM": "https://www.tradingview.com/symbols/MYX-PCHEM/",
-    "PETGAS": "https://www.tradingview.com/symbols/MYX-PETGAS/",
-    "PETDAG": "https://www.tradingview.com/symbols/MYX-PETDAG/",
+# List of stock symbols in Yahoo Finance format
+stock_symbols = {
+    "AMWAY": "6351.KL",
+    "APOLLO": "6432.KL",
+    "MBB": "1155.KL",
+    "PETDAG": "5681.KL",
+    "PETGAS": "6033.KL",
+    "PETCHEM": "5183.KL",
+    "PANAMY": "3719.KL",
+    # Add more symbols here if needed
 }
 
-# Extract price from TradingView
-from playwright.sync_api import sync_playwright, TimeoutError as PlaywrightTimeoutError
+# Output CSV file
+output_file = "stock_prices.csv"
 
-def get_price_with_playwright(url: str) -> str:
-    with sync_playwright() as p:
-        browser = p.chromium.launch(headless=True)
-        page = browser.new_page()
+def fetch_price_yfinance(symbol: str) -> float:
+    ticker = yf.Ticker(symbol)
+    data = ticker.history(period="1d", interval="1m")
+    if not data.empty:
+        latest_price = data['Close'].iloc[-1]
+        return round(latest_price, 2)
+    else:
+        raise ValueError(f"No data returned for symbol: {symbol}")
 
-        print(f"Fetching price for {url}...")
+def write_to_csv(timestamp: str, prices: dict):
+    file_exists = False
+    try:
+        with open(output_file, "r"):
+            file_exists = True
+    except FileNotFoundError:
+        pass
 
-        try:
-            # Go to the page and wait for network activity to settle
-            page.goto(url, wait_until="networkidle")
+    with open(output_file, mode="a", newline="") as file:
+        writer = csv.writer(file)
+        if not file_exists:
+            # Write header if file is new
+            writer.writerow(["Timestamp"] + list(prices.keys()))
+        writer.writerow([timestamp] + list(prices.values()))
 
-            # Wait for the price element to appear
-            page.wait_for_selector("div.tv-symbol-price-quote__value", timeout=30000)
-
-            # Extract price
-            price = page.query_selector("div.tv-symbol-price-quote__value").inner_text()
-
-            print(f"Price fetched: {price}")
-            return price
-
-        except PlaywrightTimeoutError:
-            print("❌ TimeoutError: Selector 'div.tv-symbol-price-quote__value' not found within 30 seconds.")
-            
-            # Save a full page screenshot
-            screenshot_path = "error.png"
-            page.screenshot(path=screenshot_path, full_page=True)
-            print(f"📸 Screenshot saved to: {screenshot_path}")
-            
-            # Save the HTML content for offline inspection
-            html_dump = page.content()
-            with open("error_page_dump.html", "w", encoding="utf-8") as f:
-                f.write(html_dump)
-            print("📝 HTML content dumped to 'error_page_dump.html'.")
-
-            raise  # Re-raise for CI to catch as failure
-
-        finally:
-            browser.close()
-
-
-# Write to CSV
-def write_to_csv(data):
-    os.makedirs("data", exist_ok=True)  # ✅ create 'data' folder if missing
-    with open("data/stock_prices.csv", "a", newline="") as csvfile:
-        writer = csv.writer(csvfile)
-        for symbol, price in data.items():
-            writer.writerow([datetime.now().strftime("%Y-%m-%d %H:%M:%S"), symbol, price])
-
-# Main job to run
 def crawl_prices():
-    print("Running crawl at:", datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
-    results = {}
-    for symbol, url in STOCK_URLS.items():
-        print(f"Fetching price for {symbol}...")
-        price = get_price_with_playwright(url)
-        results[symbol] = price
-        print(f"{symbol}: {price}")
-    write_to_csv(results)
-    print("Finished writing to CSV.\n")
+    print(f"Running crawl at: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
+    prices = {}
+    for name, symbol in stock_symbols.items():
+        try:
+            print(f"Fetching price for {name} ({symbol})...")
+            price = fetch_price_yfinance(symbol)
+            prices[name] = price
+            print(f"✅ {name} = {price}")
+        except Exception as e:
+            print(f"❌ Failed to fetch {name}: {e}")
+            prices[name] = "N/A"
+    write_to_csv(datetime.now().strftime("%Y-%m-%d %H:%M:%S"), prices)
+    print("✅ Prices written to", output_file)
 
-# No scheduler needed — we call the function directly
 if __name__ == "__main__":
     crawl_prices()
