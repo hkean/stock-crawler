@@ -15,6 +15,9 @@ jobs:
       with:
         persist-credentials: false  # disable default GITHUB_TOKEN to use PAT below
 
+    - name: Log current time
+      run: echo "Workflow triggered at: $(date -u)"
+
     - name: Set up Python
       uses: actions/setup-python@v5
       with:
@@ -28,7 +31,7 @@ jobs:
 
     - name: Commit and push CSV file
       env:
-        GITHUB_TOKEN: ${{ secrets.GH_PAT }}  # <-- create this secret with a Personal Access Token
+        GITHUB_TOKEN: ${{ secrets.GH_PAT }}
       run: |
         git config --global user.name "github-actions[bot]"
         git config --global user.email "github-actions[bot]@users.noreply.github.com"
@@ -40,5 +43,4 @@ jobs:
         else
           git commit -m "Update stock prices on $(date +'%Y-%m-%d %H:%M:%S')"
           git push --force "https://x-access-token:${GITHUB_TOKEN}@github.com/${{ github.repository }}.git" HEAD:${{ github.ref }}
-
         fi
