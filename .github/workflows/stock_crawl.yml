@@ -16,7 +16,8 @@ jobs:
         persist-credentials: false
 
     - name: Log current time
-      run: echo "Workflow triggered at: $(date -u)"
+      run: |
+        echo "Workflow triggered at: $(date -u)"
 
     - name: Set up Python
       uses: actions/setup-python@v5
